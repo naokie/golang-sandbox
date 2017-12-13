@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -26,18 +25,27 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
+type Browser struct {
+	Name   string
+	Engine string
+}
+
+type ViewData struct {
+	Browsers []Browser
+}
+
 func main() {
 	http.HandleFunc("/view/", viewHandler)
 	http.HandleFunc("/edit/", editHandler)
 	http.HandleFunc("/save/", saveHandler)
+	http.HandleFunc("/range/", rangeHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.URL.Path[6:]
-	fmt.Println(title)
 	p, _ := loadPage(title)
-	t, err := template.ParseFiles("view.html")
+	t, err := template.ParseFiles("tmpl/view.html")
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +58,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		p = &Page{Title: title}
 	}
-	t, err := template.ParseFiles("edit.html")
+	t, err := template.ParseFiles("tmpl/edit.html")
 	if err != nil {
 		panic(err)
 	}
@@ -63,4 +71,19 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	p := &Page{Title: title, Body: []byte(body)}
 	p.save()
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
+}
+
+func rangeHandler(w http.ResponseWriter, r *http.Request) {
+	t, err := template.New("range.html").ParseFiles("tmpl/range.html")
+	if err != nil {
+		panic(err)
+	}
+	t.Execute(w, ViewData{
+		Browsers: []Browser{
+			Browser{"Google Chrome", "Blink"},
+			Browser{"Internet Explorer", "Trident"},
+			Browser{"Firefox", "Gecko"},
+			Browser{"Safari", "WebKit"},
+		},
+	})
 }
