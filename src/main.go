@@ -73,8 +73,18 @@ func saveHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/view/"+title, http.StatusFound)
 }
 
+func wrapBracket(s string, ltag string, rtag string) string {
+	return ltag + s + rtag
+}
+
 func rangeHandler(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("range.html").ParseFiles("tmpl/range.html")
+	funcMap := template.FuncMap{
+		"bracket": func(label string) string {
+			return wrapBracket(label, "{", "}")
+		},
+	}
+
+	t, err := template.New("range.html").Funcs(funcMap).ParseFiles("tmpl/range.html")
 	if err != nil {
 		panic(err)
 	}
